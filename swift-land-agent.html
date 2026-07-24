@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swift Land Agent™ — AI Land Deal Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B3D91;
+    --navy-dark:#082a66;
+    --navy-tint:#EAF0FB;
+    --emerald:#16A34A;
+    --emerald-tint:#DCFCE7;
+    --emerald-dark:#0F7A38;
+    --gold:#CA8A04;
+    --gold-light:#FDE68A;
+    --red:#DC2626;
+    --red-tint:#FEE2E2;
+    --amber:#D97706;
+    --amber-tint:#FEF3C7;
+    --bg:#FFFFFF;
+    --surface:#F8FAFC;
+    --surface-2:#F1F5F9;
+    --border:#E2E8F0;
+    --text:#0F172A;
+    --text-muted:#64748B;
+    --radius:14px;
+    --radius-sm:9px;
+    --shadow:0 1px 2px rgba(15,23,42,.04), 0 8px 24px -12px rgba(15,23,42,.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--surface);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Space Grotesk',system-ui,sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  ::selection{background:var(--emerald-tint);}
+
+  /* ===== Layout shell ===== */
+  #app{display:flex; min-height:100vh;}
+
+  /* Sidebar */
+  #sidebar{
+    width:248px; flex-shrink:0; background:var(--navy);
+    color:#fff; position:sticky; top:0; height:100vh; overflow-y:auto;
+    display:flex; flex-direction:column;
+  }
+  .brand{padding:22px 20px 16px; border-bottom:1px solid rgba(255,255,255,.12);}
+  .brand-mark{display:flex; align-items:center; gap:10px;}
+  .brand-icon{
+    width:34px; height:34px; border-radius:9px;
+    background:linear-gradient(135deg, var(--emerald), var(--emerald-dark));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk'; font-weight:700; font-size:16px; color:#fff;
+    box-shadow:0 4px 10px rgba(22,163,74,.35);
+  }
+  .brand-name{font-family:'Space Grotesk'; font-weight:700; font-size:15.5px; line-height:1.15;}
+  .brand-tag{font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.55); margin-top:2px;}
+
+  nav.steps{padding:14px 10px; flex:1;}
+  .step-group-label{font-size:10px; text-transform:uppercase; letter-spacing:.09em; color:rgba(255,255,255,.4); padding:14px 12px 6px;}
+  .step-btn{
+    width:100%; display:flex; align-items:center; gap:10px; text-align:left;
+    background:transparent; border:none; color:rgba(255,255,255,.75);
+    padding:9px 12px; border-radius:9px; font-size:13.5px; font-weight:500;
+    cursor:pointer; margin-bottom:2px; transition:background .15s, color .15s;
+    font-family:'Inter';
+  }
+  .step-btn .num{
+    width:20px; height:20px; border-radius:6px; background:rgba(255,255,255,.1);
+    display:flex; align-items:center; justify-content:center; font-size:10.5px;
+    font-family:'JetBrains Mono'; font-weight:600; flex-shrink:0;
+  }
+  .step-btn:hover{background:rgba(255,255,255,.08); color:#fff;}
+  .step-btn.active{background:rgba(255,255,255,.14); color:#fff;}
+  .step-btn.active .num{background:var(--emerald); color:#fff;}
+
+  .sidebar-foot{padding:14px 20px 18px; border-top:1px solid rgba(255,255,255,.12);}
+  .grade-pill-mini{
+    display:flex; align-items:center; justify-content:space-between;
+    background:rgba(255,255,255,.08); border-radius:10px; padding:10px 12px;
+  }
+  .grade-pill-mini .lbl{font-size:10.5px; color:rgba(255,255,255,.55); text-transform:uppercase; letter-spacing:.05em;}
+  .grade-pill-mini .val{font-family:'Space Grotesk'; font-weight:700; font-size:17px;}
+
+  /* Main */
+  #main{flex:1; min-width:0;}
+  #topbar{
+    position:sticky; top:0; z-index:5; background:rgba(255,255,255,.85); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border); padding:14px 32px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+  }
+  #topbar .title{font-family:'Space Grotesk'; font-weight:700; font-size:19px;}
+  #topbar .subtitle{font-size:12.5px; color:var(--text-muted); margin-top:1px;}
+  .btn{
+    font-family:'Inter'; font-weight:600; font-size:13px; border-radius:9px;
+    padding:9px 15px; cursor:pointer; border:1px solid transparent; transition:.15s;
+    display:inline-flex; align-items:center; gap:7px;
+  }
+  .btn-primary{background:var(--navy); color:#fff;}
+  .btn-primary:hover{background:var(--navy-dark);}
+  .btn-emerald{background:var(--emerald); color:#fff;}
+  .btn-emerald:hover{background:var(--emerald-dark);}
+  .btn-ghost{background:#fff; color:var(--text); border-color:var(--border);}
+  .btn-ghost:hover{background:var(--surface-2);}
+  .btn-sm{padding:6px 10px; font-size:12px; border-radius:7px;}
+
+  .content{padding:28px 32px 80px; max-width:1180px;}
+  .panel{display:none;}
+  .panel.active{display:block; animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+
+  .panel-head{margin-bottom:22px;}
+  .panel-head h2{font-size:22px; margin:0 0 4px; font-weight:700;}
+  .panel-head p{margin:0; color:var(--text-muted); font-size:13.5px; max-width:640px;}
+  .eyebrow{
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--emerald-dark); margin-bottom:6px;
+  }
+
+  .card{
+    background:#fff; border:1px solid var(--border); border-radius:var(--radius);
+    padding:20px 22px; box-shadow:var(--shadow); margin-bottom:18px;
+  }
+  .card-title{font-family:'Space Grotesk'; font-weight:600; font-size:15px; margin:0 0 14px; display:flex; align-items:center; gap:8px;}
+  .card-title .dot{width:7px; height:7px; border-radius:50%; background:var(--emerald);}
+
+  .grid{display:grid; gap:14px;}
+  .grid-2{grid-template-columns:1fr 1fr;}
+  .grid-3{grid-template-columns:1fr 1fr 1fr;}
+  .grid-4{grid-template-columns:1fr 1fr 1fr 1fr;}
+  @media (max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr 1fr;}}
+
+  .field label{display:block; font-size:11.5px; font-weight:600; color:var(--text-muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:.03em;}
+  .field input[type=text], .field input[type=number], .field select, .field textarea{
+    width:100%; padding:9px 11px; border:1.5px solid var(--border); border-radius:8px;
+    font-family:'Inter'; font-size:13.5px; color:var(--text); background:#fff; transition:.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--navy); box-shadow:0 0 0 3px var(--navy-tint);}
+  .field textarea{resize:vertical; min-height:70px;}
+  .field .suffix-wrap{position:relative;}
+  .field .suffix-wrap input{padding-right:30px;}
+  .field .suffix{position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--text-muted); font-weight:600;}
+  .checkline{display:flex; align-items:center; gap:8px; padding:9px 0;}
+  .checkline input{width:16px; height:16px; accent-color:var(--emerald);}
+  .checkline label{font-size:13px; font-weight:500; color:var(--text);}
+
+  .toggle-row{display:flex; gap:6px; flex-wrap:wrap;}
+  .toggle-btn{
+    padding:7px 13px; border-radius:7px; border:1.5px solid var(--border); background:#fff;
+    font-size:12.5px; font-weight:600; cursor:pointer; color:var(--text-muted);
+  }
+  .toggle-btn.on{border-color:var(--navy); background:var(--navy); color:#fff;}
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{
+    text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em;
+    color:var(--text-muted); padding:8px 10px; border-bottom:2px solid var(--border); font-weight:700;
+  }
+  tbody td{padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody input[type=text], tbody input[type=number]{
+    width:100%; padding:6px 8px; border:1.5px solid var(--border); border-radius:6px; font-size:12.5px; font-family:'Inter';
+  }
+  .badge{display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:99px; font-size:11px; font-weight:700;}
+  .badge-green{background:var(--emerald-tint); color:var(--emerald-dark);}
+  .badge-red{background:var(--red-tint); color:var(--red);}
+  .badge-amber{background:var(--amber-tint); color:var(--amber);}
+  .icon-btn{background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:15px; padding:4px;}
+  .icon-btn:hover{color:var(--red);}
+
+  .stat{background:var(--surface); border:1px solid var(--border); border-radius:11px; padding:14px 16px;}
+  .stat .lbl{font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; font-weight:700; margin-bottom:6px;}
+  .stat .val{font-family:'JetBrains Mono'; font-weight:700; font-size:20px; color:var(--navy);}
+  .stat .val.emerald{color:var(--emerald-dark);}
+  .stat .sub{font-size:11.5px; color:var(--text-muted); margin-top:3px;}
+
+  /* Gauge */
+  .gauge-wrap{display:flex; align-items:center; gap:28px; flex-wrap:wrap;}
+  .gauge{position:relative; width:200px; height:110px;}
+  .gauge svg{width:100%; height:100%;}
+  .gauge-label{position:absolute; bottom:0; left:0; right:0; text-align:center;}
+  .gauge-label .num{font-family:'Space Grotesk'; font-weight:700; font-size:22px; color:var(--navy);}
+  .gauge-label .txt{font-size:10.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;}
+
+  /* Offer comparison — signature element */
+  .offer-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+  @media (max-width:900px){.offer-grid{grid-template-columns:1fr 1fr;}}
+  .offer-card{
+    border-radius:var(--radius); padding:18px 16px; position:relative; overflow:hidden;
+    border:1.5px solid var(--border); background:#fff; transition:transform .15s, box-shadow .15s;
+  }
+  .offer-card.best{border-color:var(--emerald); box-shadow:0 0 0 3px var(--emerald-tint);}
+  .offer-card .strategy{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); display:flex; align-items:center; gap:6px; margin-bottom:10px;}
+  .offer-card .strategy .ic{font-size:15px;}
+  .offer-card .offer-amt{font-family:'JetBrains Mono'; font-weight:700; font-size:23px; color:var(--navy); line-height:1.1;}
+  .offer-card .offer-amt-lbl{font-size:10.5px; color:var(--text-muted); margin-top:2px; margin-bottom:12px;}
+  .offer-card .profit-lbl{font-size:10.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; font-weight:700; margin-top:6px;}
+  .offer-card .profit-amt{font-family:'JetBrains Mono'; font-weight:700; font-size:17px; color:var(--emerald-dark);}
+  .best-ribbon{
+    position:absolute; top:10px; right:-30px; transform:rotate(35deg);
+    background:var(--emerald); color:#fff; font-size:9.5px; font-weight:800;
+    padding:2px 32px; text-transform:uppercase; letter-spacing:.05em;
+  }
+
+  /* Deal grade badge */
+  .grade-hero{display:flex; align-items:center; gap:20px; flex-wrap:wrap;}
+  .grade-badge{
+    width:96px; height:96px; border-radius:20px; display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk'; font-weight:700; font-size:32px; color:#fff; flex-shrink:0;
+    box-shadow:0 10px 24px -8px rgba(0,0,0,.25);
+  }
+  .grade-Aplus{background:linear-gradient(145deg,#F5C542,var(--gold)); color:#5A3E00; box-shadow:0 10px 26px -6px rgba(202,138,4,.55);}
+  .grade-A{background:linear-gradient(145deg,#22c55e,var(--emerald-dark));}
+  .grade-B{background:linear-gradient(145deg,#4ade80,#16a34a);}
+  .grade-C{background:linear-gradient(145deg,#fbbf24,var(--amber));}
+  .grade-F{background:linear-gradient(145deg,#f87171,var(--red));}
+  .grade-copy .title{font-family:'Space Grotesk'; font-weight:700; font-size:18px; margin-bottom:3px;}
+  .grade-copy .desc{font-size:13px; color:var(--text-muted); max-width:520px; line-height:1.5;}
+
+  /* DD checklist */
+  .dd-item{display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--border);}
+  .dd-item:last-child{border-bottom:none;}
+  .dd-item .name{font-size:13.5px; font-weight:500;}
+  .flag-group{display:flex; gap:4px;}
+  .flag-btn{width:30px; height:26px; border-radius:6px; border:1.5px solid var(--border); cursor:pointer; background:#fff;}
+  .flag-btn.green.on{background:var(--emerald); border-color:var(--emerald);}
+  .flag-btn.amber.on{background:var(--amber); border-color:var(--amber);}
+  .flag-btn.red.on{background:var(--red); border-color:var(--red);}
+
+  .slider-row{margin-bottom:16px;}
+  .slider-row .top{display:flex; justify-content:space-between; font-size:12.5px; font-weight:600; margin-bottom:6px;}
+  .slider-row input[type=range]{width:100%; accent-color:var(--navy);}
+
+  .risk-gauge-num{font-family:'Space Grotesk'; font-weight:700; font-size:40px;}
+
+  .summary-box{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:22px 24px; font-size:13.5px; line-height:1.75; white-space:pre-wrap; font-family:'Inter';
+  }
+  .summary-box b{color:var(--navy);}
+
+  .strategy-detail{border-top:1px dashed var(--border); margin-top:14px; padding-top:14px;}
+  .kv-row{display:flex; justify-content:space-between; padding:5px 0; font-size:13px;}
+  .kv-row .k{color:var(--text-muted);}
+  .kv-row .v{font-family:'JetBrains Mono'; font-weight:600;}
+
+  .note{font-size:12px; color:var(--text-muted); background:var(--navy-tint); border-radius:8px; padding:9px 12px; margin-top:8px; line-height:1.5;}
+
+  .tips-list{margin:0; padding-left:18px; font-size:13.5px; line-height:1.9; color:var(--text);}
+  .tips-list li::marker{color:var(--emerald);}
+
+  footer.nav-actions{display:flex; justify-content:space-between; margin-top:26px;}
+
+  /* Print */
+  @media print{
+    #sidebar, #topbar, footer.nav-actions, .no-print{display:none !important;}
+    #app, #main, .content{all:unset; display:block; width:100%;}
+    body{background:#fff;}
+    .panel{display:block !important; page-break-after:always; padding:0 8px;}
+    .card{box-shadow:none; border:1px solid #ccc;}
+    .content{padding:0; max-width:100%;}
+  }
+
+  ::-webkit-scrollbar{width:9px; height:9px;}
+  ::-webkit-scrollbar-thumb{background:#cbd5e1; border-radius:99px;}
+  #sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-icon">SL</div>
+        <div>
+          <div class="brand-name">Swift Land Agent™</div>
+          <div class="brand-tag">Deal Calculator</div>
+        </div>
+      </div>
+    </div>
+    <nav class="steps" id="stepsNav"></nav>
+    <div class="sidebar-foot">
+      <div class="grade-pill-mini">
+        <span class="lbl">Deal Grade</span>
+        <span class="val" id="miniGrade">—</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <main id="main">
+    <div id="topbar">
+      <div>
+        <div class="title" id="topTitle">Property Information</div>
+        <div class="subtitle" id="topSubtitle">Enter the subject property details to begin your analysis</div>
+      </div>
+      <div style="display:flex; gap:8px;" class="no-print">
+        <button class="btn btn-ghost btn-sm" onclick="newAnalysis()">＋ New Analysis</button>
+        <button class="btn btn-primary btn-sm" onclick="window.print()">⬇ Export PDF</button>
+      </div>
+    </div>
+
+    <div class="content" id="content"></div>
+  </main>
+
+</div>
+
+<script>
+/* =========================================================================
+   SWIFT LAND AGENT — STATE
+========================================================================= */
+const STEPS = [
+  {id:'property', num:1, label:'Property Info', group:'Setup'},
+  {id:'comps', num:2, label:'Comp Analyzer', group:'Setup'},
+  {id:'market', num:3, label:'Market Value', group:'Analysis'},
+  {id:'settings', num:4, label:'Calculator Settings', group:'Analysis'},
+  {id:'calc', num:5, label:'Offer Calculations', group:'Analysis'},
+  {id:'grade', num:6, label:'Deal Grade', group:'Decision'},
+  {id:'dd', num:7, label:'Due Diligence', group:'Decision'},
+  {id:'risk', num:8, label:'Risk Score', group:'Decision'},
+  {id:'offer', num:9, label:'Offer Strategy', group:'Decision'},
+  {id:'summary', num:10, label:'AI Summary', group:'Decision'},
+];
+
+function defaultState(){
+  return {
+    property:{
+      address:'', county:'', state:'', apn:'', subdivision:'',
+      lotSqft:'', lotAcres:'', askingPrice:'', owner:'', zoning:'',
+      floodZone:'No', hoa:'No', utilities:'', roadType:'', cornerLot:false,
+      waterfront:false, topography:'', surveyAvailable:false, soilTest:false,
+      approvedPlans:false, notes:''
+    },
+    comps:[
+      {address:'', distance:'', saleDate:'', lotAcres:'', salePrice:'', similarity:100, included:true}
+    ],
+    marketOverride:'',
+    settings:{
+      wholesaleFee:10, buyerEquity:25, closingCosts:3, holdingCosts:1, marketingCosts:2,
+      builderMargin:20, developerMargin:30, minLotSize:0.25, pricePerLot:'',
+      developmentCosts:25, commission:6, novationClosing:2,
+      contractPrice:''
+    },
+    dd:{
+      'Road Access':'green','Utilities':'green','Flood Zone':'green','Wetlands':'green',
+      'HOA':'green','Back Taxes':'green','Liens':'green','Environmental Issues':'green',
+      'Topography':'green','Buildability':'green'
+    },
+    risk:{market:30, builder:30, liquidity:30},
+    currency:'$'
+  };
+}
+let state = defaultState();
+let activeStep = 'property';
+
+function newAnalysis(){
+  if(confirm('Start a new analysis? Current data on screen will be cleared.')){
+    state = defaultState();
+    activeStep = 'property';
+    renderAll();
+  }
+}
+
+/* =========================================================================
+   HELPERS
+========================================================================= */
+const fmt = n => isFinite(n) ? state.currency + Math.round(n).toLocaleString('en-US') : '—';
+const fmt1 = n => isFinite(n) ? n.toFixed(1) : '—';
+const pct = n => isFinite(n) ? n.toFixed(1)+'%' : '—';
+const num = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+function acresFromSqft(sqft){ return sqft/43560; }
+
+/* =========================================================================
+   CALCULATIONS
+========================================================================= */
+function computeAll(){
+  const p = state.property;
+  const s = state.settings;
+  const lotAcres = num(p.lotAcres) || acresFromSqft(num(p.lotSqft)) || 0;
+
+  // --- Comps / Market Value ---
+  const included = state.comps.filter(c => c.included && num(c.salePrice) > 0 && num(c.lotAcres) > 0);
+  let avgPPA = 0, totalWeight = 0;
+  included.forEach(c=>{
+    const ppa = num(c.salePrice) / num(c.lotAcres);
+    const w = clamp(num(c.similarity)||100, 1, 100);
+    avgPPA += ppa * w;
+    totalWeight += w;
+  });
+  avgPPA = totalWeight > 0 ? avgPPA / totalWeight : 0;
+
+  let likelyMV;
+  let usedOverride = false;
+  if(num(state.marketOverride) > 0){
+    likelyMV = num(state.marketOverride);
+    usedOverride = true;
+  } else {
+    likelyMV = avgPPA * lotAcres;
+  }
+  const lowMV = likelyMV * 0.90;
+  const highMV = likelyMV * 1.10;
+  const confidence = usedOverride ? 60 : clamp(45 + included.length*11, 20, 96);
+
+  const compsWithCalc = state.comps.map(c=>{
+    const ppa = num(c.lotAcres)>0 ? num(c.salePrice)/num(c.lotAcres) : 0;
+    const adjusted = ppa * lotAcres;
+    return {...c, ppa, adjusted};
+  });
+
+  // --- Wholesale ---
+  const MV = likelyMV;
+  const wholesaleFee$ = MV * (num(s.wholesaleFee)/100);
+  const buyerEquity$ = MV * (num(s.buyerEquity)/100);
+  const closingCosts$ = MV * (num(s.closingCosts)/100);
+  const holdingCosts$ = MV * (num(s.holdingCosts)/100);
+  const marketingCosts$ = MV * (num(s.marketingCosts)/100);
+  const MAO = MV - buyerEquity$ - closingCosts$ - holdingCosts$ - marketingCosts$ - wholesaleFee$;
+  const suggestedOffer = MAO * 0.90;
+  const contractPrice = num(s.contractPrice) > 0 ? num(s.contractPrice) : suggestedOffer;
+
+  const wholesale = {
+    marketValue: MV, wholesaleFee$, buyerEquity$, closingCosts$, holdingCosts$, marketingCosts$,
+    MAO, suggestedOffer, assignmentFee: MAO - contractPrice
+  };
+
+  // --- Builder ---
+  const builderValue = MV;
+  const builderMargin = num(s.builderMargin)/100;
+  const highestBuilderOffer = builderValue * (1 - builderMargin);
+  const builderProfitTheirs = builderValue - highestBuilderOffer;
+  const builderROI = highestBuilderOffer>0 ? builderProfitTheirs/highestBuilderOffer : 0;
+  const builder = {
+    builderValue, highestBuilderOffer, builderProfitTheirs, builderROI,
+    ourProfit: highestBuilderOffer - contractPrice
+  };
+
+  // --- Developer ---
+  const minLotSize = num(s.minLotSize) || 0.25;
+  const potentialLots = minLotSize>0 ? Math.floor(lotAcres/minLotSize) : 0;
+  const suggestedPricePerLot = potentialLots>0 ? (MV/lotAcres)*minLotSize*1.15 : 0;
+  const pricePerLot = num(s.pricePerLot) > 0 ? num(s.pricePerLot) : suggestedPricePerLot;
+  const grossDevValue = potentialLots * pricePerLot;
+  const devCosts$ = grossDevValue * (num(s.developmentCosts)/100);
+  const developerMargin = num(s.developerMargin)/100;
+  const highestDeveloperOffer = (grossDevValue - devCosts$) * (1 - developerMargin);
+  const developer = {
+    potentialLots, pricePerLot, suggestedPricePerLot, grossDevValue, devCosts$, highestDeveloperOffer,
+    ourProfit: highestDeveloperOffer - contractPrice
+  };
+
+  // --- Novation ---
+  const retailValue = MV;
+  const commission$ = retailValue * (num(s.commission)/100);
+  const novClosing$ = retailValue * (num(s.novationClosing)/100);
+  const sellerAgreedNet = contractPrice;
+  const sellerNet = sellerAgreedNet;
+  const yourFee = retailValue - commission$ - novClosing$ - sellerAgreedNet;
+  const novProjectedProfit = yourFee - marketingCosts$ - holdingCosts$;
+  const novation = {
+    retailValue, commission$, novClosing$, sellerNet, yourFee, projectedProfit: novProjectedProfit,
+    ourProfit: novProjectedProfit
+  };
+
+  // --- Due diligence -> risk contributions ---
+  const ddVals = Object.values(state.dd);
+  const ddScoreMap = {green:12, amber:50, red:88};
+  const envRisk = (ddScoreMap[state.dd['Environmental Issues']] + ddScoreMap[state.dd['Wetlands']] + ddScoreMap[state.dd['Topography']])/3;
+  const floodRisk = ddScoreMap[state.dd['Flood Zone']];
+  const titleRisk = (ddScoreMap[state.dd['Liens']] + ddScoreMap[state.dd['Back Taxes']])/2;
+  const accessRisk = (ddScoreMap[state.dd['Road Access']] + ddScoreMap[state.dd['Utilities']] + ddScoreMap[state.dd['Buildability']] + ddScoreMap[state.dd['HOA']])/4;
+
+  const overallRisk = clamp(
+    (num(state.risk.market)*0.20) + (num(state.risk.builder)*0.15) + (num(state.risk.liquidity)*0.15) +
+    (envRisk*0.15) + (floodRisk*0.15) + (titleRisk*0.10) + (accessRisk*0.10)
+  , 0, 100);
+
+  // --- Deal grade ---
+  const strategies = [
+    {key:'wholesale', label:'Wholesale', icon:'💵', offer: wholesale.MAO, profit: wholesale.assignmentFee},
+    {key:'builder', label:'Builder', icon:'🏗️', offer: builder.highestBuilderOffer, profit: builder.ourProfit},
+    {key:'developer', label:'Developer', icon:'🏘️', offer: developer.highestDeveloperOffer, profit: developer.ourProfit},
+    {key:'novation', label:'Novation', icon:'📈', offer: novation.yourFee + sellerAgreedNet, profit: novation.ourProfit},
+  ];
+  const bestStrategy = strategies.reduce((a,b)=> (b.profit>a.profit ? b : a), strategies[0]);
+  const marginPct = MV>0 ? (bestStrategy.profit/MV)*100 : 0;
+
+  let grade = 'F', gradeLabel='Pass', gradeDesc='Profit margin is too thin or negative relative to market value at the current asking price. Renegotiate or walk away.';
+  if(marginPct >= 25){ grade='Aplus'; gradeLabel='Institutional Buy'; gradeDesc='Exceptional spread across nearly every exit strategy. This deal clears institutional-quality thresholds — move quickly.'; }
+  else if(marginPct >= 18){ grade='A'; gradeLabel='Excellent'; gradeDesc='Strong margin with healthy room across exit strategies. A high-confidence acquisition at the current numbers.'; }
+  else if(marginPct >= 12){ grade='B'; gradeLabel='Strong Buy'; gradeDesc='Solid, dependable spread. Worth pursuing, especially if due diligence and risk factors check out clean.'; }
+  else if(marginPct >= 6){ grade='C'; gradeLabel='Thin Deal'; gradeDesc='Margin is workable but tight. Only proceed if you can compress your contract price further or risk factors are low.'; }
+
+  if(overallRisk >= 65 && grade !== 'F'){
+    const order = ['Aplus','A','B','C','F'];
+    const idx = order.indexOf(grade);
+    grade = order[Math.min(idx+1, order.length-1)];
+    if(grade==='Aplus') gradeLabel='Institutional Buy'; else if(grade==='A') gradeLabel='Excellent';
+    else if(grade==='B') gradeLabel='Strong Buy'; else if(grade==='C') gradeLabel='Thin Deal'; else gradeLabel='Pass';
+    gradeDesc += ' Downgraded one tier due to elevated overall risk score.';
+  }
+
+  // --- Offer strategy ---
+  const offerStrategy = {
+    initial: wholesale.MAO * 0.72,
+    counter: wholesale.MAO * 0.85,
+    max: wholesale.MAO,
+    walkAway: wholesale.MAO * 1.03,
+  };
+
+  const recommendation = (grade!=='F' && bestStrategy.profit>0) ? 'BUY' : 'PASS';
+
+  return {
+    lotAcres, avgPPA, likelyMV, lowMV, highMV, confidence, usedOverride, compsWithCalc,
+    contractPrice, wholesale, builder, developer, novation, strategies, bestStrategy, marginPct,
+    grade, gradeLabel, gradeDesc, overallRisk, envRisk, floodRisk, titleRisk, accessRisk,
+    offerStrategy, recommendation
+  };
+}
+
+/* =========================================================================
+   RENDER: SIDEBAR NAV
+========================================================================= */
+function renderNav(){
+  const groups = [...new Set(STEPS.map(s=>s.group))];
+  let html = '';
+  groups.forEach(g=>{
+    html += `<div class="step-group-label">${g}</div>`;
+    STEPS.filter(s=>s.group===g).forEach(s=>{
+      html += `<button class="step-btn ${s.id===activeStep?'active':''}" onclick="goStep('${s.id}')">
+        <span class="num">${s.num}</span>${s.label}
+      </button>`;
+    });
+  });
+  document.getElementById('stepsNav').innerHTML = html;
+}
+function goStep(id){
+  activeStep = id;
+  renderAll();
+  document.getElementById('main').scrollTo({top:0, behavior:'instant'});
+}
+
+/* =========================================================================
+   RENDER: TOPBAR
+========================================================================= */
+function renderTopbar(calc){
+  const titles = {
+    property:['Property Information','Enter the subject property details to begin your analysis'],
+    comps:['AI Comp Analyzer','Add sold comparables and let the calculator weight them into a market value'],
+    market:['Market Value','Low / likely / high value range with a confidence score'],
+    settings:['Calculator Settings','Tune every percentage that drives your offer math'],
+    calc:['Offer Calculations','Four exit strategies, compared side by side'],
+    grade:['Deal Grade','Automatic grading based on spread and risk'],
+    dd:['Due Diligence','Flag each item green, yellow, or red'],
+    risk:['Risk Score','Market, builder, environmental, flood, and liquidity risk'],
+    offer:['Offer Strategy','Initial offer through walk-away price, plus negotiation tips'],
+    summary:['AI Summary','Full deal report, ready to copy or export'],
+  };
+  document.getElementById('topTitle').textContent = titles[activeStep][0];
+  document.getElementById('topSubtitle').textContent = titles[activeStep][1];
+  document.getElementById('miniGrade').textContent = calc.grade==='Aplus' ? 'A+' : calc.grade;
+  document.getElementById('miniGrade').style.color = calc.grade==='F' ? '#fca5a5' : (calc.grade==='C' ? '#fcd34d' : '#86efac');
+}
+
+/* =========================================================================
+   RENDER: PANELS
+========================================================================= */
+function renderAll(){
+  renderNav();
+  const calc = computeAll();
+  renderTopbar(calc);
+  const c = document.getElementById('content');
+  c.innerHTML = renderPanel(activeStep, calc);
+  attachHandlers();
+}
+
+function stepNavFooter(){
+  const idx = STEPS.findIndex(s=>s.id===activeStep);
+  const prev = STEPS[idx-1], next = STEPS[idx+1];
+  return `<footer class="nav-actions no-print">
+    <button class="btn btn-ghost" ${prev?`onclick="goStep('${prev.id}')"`:'disabled style="visibility:hidden"'}>← ${prev?prev.label:''}</button>
+    <button class="btn btn-primary" ${next?`onclick="goStep('${next.id}')"`:'disabled style="visibility:hidden"'}>${next?next.label:''} →</button>
+  </footer>`;
+}
+
+function renderPanel(id, calc){
+  let body = '';
+  if(id==='property') body = panelProperty();
+  else if(id==='comps') body = panelComps(calc);
+  else if(id==='market') body = panelMarket(calc);
+  else if(id==='settings') body = panelSettings(calc);
+  else if(id==='calc') body = panelCalc(calc);
+  else if(id==='grade') body = panelGrade(calc);
+  else if(id==='dd') body = panelDD(calc);
+  else if(id==='risk') body = panelRisk(calc);
+  else if(id==='offer') body = panelOffer(calc);
+  else if(id==='summary') body = panelSummary(calc);
+  return `<div class="panel active">${body}${stepNavFooter()}</div>`;
+}
+
+/* ---------- 1. PROPERTY ---------- */
+function panelProperty(){
+  const p = state.property;
+  const field = (key,label,type='text',opts=null) => {
+    if(type==='select'){
+      return `<div class="field"><label>${label}</label>
+        <select data-bind="property.${key}">
+          ${opts.map(o=>`<option value="${o}" ${p[key]===o?'selected':''}>${o}</option>`).join('')}
+        </select></div>`;
+    }
+    if(type==='checkbox'){
+      return `<div class="checkline"><input type="checkbox" id="cb-${key}" data-bind="property.${key}" ${p[key]?'checked':''}>
+        <label for="cb-${key}">${label}</label></div>`;
+    }
+    return `<div class="field"><label>${label}</label>
+      <input type="${type}" data-bind="property.${key}" value="${p[key] ?? ''}" placeholder="${label}">
+      </div>`;
+  };
+  return `
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Location</div>
+    <div class="grid grid-2">
+      ${field('address','Property Address')}
+      ${field('apn','APN')}
+      ${field('county','County')}
+      ${field('state','State')}
+      ${field('subdivision','Subdivision')}
+      ${field('zoning','Zoning')}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Lot & Pricing</div>
+    <div class="grid grid-4">
+      ${field('lotSqft','Lot Size (SqFt)','number')}
+      ${field('lotAcres','Lot Size (Acres)','number')}
+      ${field('askingPrice','Current Asking Price','number')}
+      ${field('owner','Current Owner')}
+    </div>
+    <div class="note">Enter either SqFt or Acres — the calculator will use Acres if present, otherwise it converts SqFt automatically.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Site Characteristics</div>
+    <div class="grid grid-3">
+      ${field('floodZone','Flood Zone','select',['No','Yes','Partial','Unknown'])}
+      ${field('hoa','HOA','select',['No','Yes','Unknown'])}
+      ${field('utilities','Utilities Available')}
+      ${field('roadType','Road Type')}
+      ${field('topography','Topography')}
+    </div>
+    <div class="grid grid-4" style="margin-top:4px;">
+      ${field('cornerLot','Corner Lot','checkbox')}
+      ${field('waterfront','Waterfront','checkbox')}
+      ${field('surveyAvailable','Survey Available','checkbox')}
+      ${field('soilTest','Soil Test Complete','checkbox')}
+    </div>
+    <div class="grid grid-4">
+      ${field('approvedPlans','Approved Plans on File','checkbox')}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Notes</div>
+    <div class="field"><textarea data-bind="property.notes" placeholder="Anything else worth remembering about this property...">${p.notes||''}</textarea></div>
+  </div>`;
+}
+
+/* ---------- 2. COMPS ---------- */
+function panelComps(calc){
+  const rows = state.comps.map((c,i)=>{
+    const cc = calc.compsWithCalc[i];
+    return `<tr>
+      <td><input type="text" data-comp="${i}.address" value="${c.address}" placeholder="Comp address"></td>
+      <td><input type="text" data-comp="${i}.distance" value="${c.distance}" placeholder="0.3 mi"></td>
+      <td><input type="text" data-comp="${i}.saleDate" value="${c.saleDate}" placeholder="MM/YYYY"></td>
+      <td><input type="number" data-comp="${i}.lotAcres" value="${c.lotAcres}" placeholder="Acres"></td>
+      <td><input type="number" data-comp="${i}.salePrice" value="${c.salePrice}" placeholder="Sale $"></td>
+      <td class="mono">${fmt(cc.ppa)}</td>
+      <td><input type="number" data-comp="${i}.similarity" value="${c.similarity}" min="1" max="100" style="width:60px"></td>
+      <td class="mono">${fmt(cc.adjusted)}</td>
+      <td style="text-align:center;">
+        <input type="checkbox" data-comp="${i}.included" ${c.included?'checked':''} style="accent-color:var(--emerald); width:16px; height:16px;">
+      </td>
+      <td><button class="icon-btn" onclick="removeComp(${i})" title="Remove">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  return `
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Comparable Sold Properties</div>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr>
+        <th>Address</th><th>Distance</th><th>Sale Date</th><th>Lot Acres</th><th>Sale Price</th>
+        <th>$/Acre</th><th>Similarity %</th><th>Adjusted Value</th><th>Include</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>
+    <div style="margin-top:12px;"><button class="btn btn-ghost btn-sm" onclick="addComp()">＋ Add Comparable</button></div>
+    <div class="note">
+      <b>Auto comp logic:</b> only include SOLD properties. Reject comps with different zoning, a different subdivision (unless no alternative exists), lot size more than 20% off, different road access, or different HOA status. Recent sales should carry a higher similarity score. Uncheck "Include" on any comp that fails these rules — it will be excluded from the market value calculation but kept on file.
+    </div>
+  </div>`;
+}
+function addComp(){ state.comps.push({address:'',distance:'',saleDate:'',lotAcres:'',salePrice:'',similarity:100,included:true}); renderAll(); }
+function removeComp(i){ state.comps.splice(i,1); if(state.comps.length===0) addComp(); renderAll(); }
+
+/* ---------- 3. MARKET VALUE ---------- */
+function gaugeSVG(pct, colorFrom, colorTo){
+  const angle = clamp(pct,0,100)/100 * 180;
+  const rad = (angle-180) * Math.PI/180;
+  const cx=100, cy=100, r=80;
+  const x = cx + r*Math.cos(rad), y = cy + r*Math.sin(rad);
+  const large = angle>180?1:0;
+  return `<svg viewBox="0 0 200 115">
+    <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#E2E8F0" stroke-width="14" stroke-linecap="round"/>
+    <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#g1)" stroke-width="14" stroke-linecap="round"
+      stroke-dasharray="${(angle/180)*251.2} 251.2"/>
+    <circle cx="${x}" cy="${y}" r="7" fill="${colorTo}" stroke="#fff" stroke-width="2.5"/>
+    <defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="${colorFrom}"/><stop offset="100%" stop-color="${colorTo}"/>
+    </linearGradient></defs>
+  </svg>`;
+}
+function panelMarket(calc){
+  return `
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Estimated Value Range</div>
+    <div class="grid grid-3">
+      <div class="stat"><div class="lbl">Low Market Value</div><div class="val">${fmt(calc.lowMV)}</div></div>
+      <div class="stat"><div class="lbl">Likely Market Value</div><div class="val emerald">${fmt(calc.likelyMV)}</div></div>
+      <div class="stat"><div class="lbl">High Market Value</div><div class="val">${fmt(calc.highMV)}</div></div>
+    </div>
+
+    <div class="gauge-wrap" style="margin-top:20px;">
+      <div class="gauge">
+        ${gaugeSVG(calc.confidence, '#0B3D91', '#16A34A')}
+        <div class="gauge-label"><div class="num">${Math.round(calc.confidence)}%</div><div class="txt">Confidence</div></div>
+      </div>
+      <div style="flex:1; min-width:240px;">
+        <div class="kv-row"><span class="k">Avg. price / acre (weighted comps)</span><span class="v">${fmt(calc.avgPPA)}</span></div>
+        <div class="kv-row"><span class="k">Subject lot size</span><span class="v">${fmt1(calc.lotAcres)} ac</span></div>
+        <div class="kv-row"><span class="k">Comps included in calc</span><span class="v">${state.comps.filter(c=>c.included).length}</span></div>
+        ${calc.usedOverride ? '<div class="badge badge-amber" style="margin-top:8px;">Using manual override value</div>' : ''}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Manual Override</div>
+    <div class="grid grid-2">
+      <div class="field"><label>Estimated Market Value (optional override)</label>
+        <input type="number" data-bind="marketOverride" value="${state.marketOverride}" placeholder="Leave blank to use comp-derived value">
+      </div>
+    </div>
+    <div class="note">If you have a stronger value source (appraisal, broker opinion, ATTOM/Regrid pull), enter it here and it will override the comp-derived estimate everywhere in the calculator.</div>
+  </div>`;
+}
+
+/* ---------- 4. SETTINGS ---------- */
+function panelSettings(calc){
+  const s = state.settings;
+  const pctField = (key,label,def) => `<div class="field"><label>${label}</label>
+    <div class="suffix-wrap"><input type="number" step="0.5" data-bind="settings.${key}" value="${s[key]}"><span class="suffix">%</span></div></div>`;
+  return `
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Wholesale Assumptions</div>
+    <div class="grid grid-4">
+      ${pctField('wholesaleFee','Wholesale Fee')}
+      ${pctField('buyerEquity','Buyer Equity')}
+      ${pctField('closingCosts','Closing Costs')}
+      ${pctField('holdingCosts','Holding Costs')}
+      ${pctField('marketingCosts','Marketing Costs')}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Builder & Developer Margins</div>
+    <div class="grid grid-4">
+      ${pctField('builderMargin','Builder Margin')}
+      ${pctField('developerMargin','Developer Margin')}
+      <div class="field"><label>Min Lot Size (Acres)</label><input type="number" step="0.05" data-bind="settings.minLotSize" value="${s.minLotSize}"></div>
+      <div class="field"><label>Price / Lot (optional)</label><input type="number" data-bind="settings.pricePerLot" value="${s.pricePerLot}" placeholder="Auto: ${fmt(calc.developer.suggestedPricePerLot)}"></div>
+    </div>
+    <div class="grid grid-4">
+      ${pctField('developmentCosts','Development Costs')}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Novation Assumptions</div>
+    <div class="grid grid-4">
+      ${pctField('commission','Agent Commission')}
+      ${pctField('novationClosing','Novation Closing Costs')}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Your Contract Price</div>
+    <div class="grid grid-2">
+      <div class="field"><label>Contract Price With Seller</label>
+        <input type="number" data-bind="settings.contractPrice" value="${s.contractPrice}" placeholder="Auto: ${fmt(calc.wholesale.suggestedOffer)} (suggested offer)">
+      </div>
+      <div class="field"><label>Currency Symbol</label><input type="text" data-bind="currency" value="${state.currency}" maxlength="1"></div>
+    </div>
+    <div class="note">Every strategy's profit is calculated as: <b>Buyer/Exit Offer − Your Contract Price</b>. Leave the contract price blank to default to the suggested wholesale offer.</div>
+  </div>`;
+}
+
+/* ---------- 5. CALCULATIONS ---------- */
+function panelCalc(calc){
+  const cards = calc.strategies.map(st=>{
+    const isBest = st.key===calc.bestStrategy.key;
+    return `<div class="offer-card ${isBest?'best':''}">
+      ${isBest?'<div class="best-ribbon">Best</div>':''}
+      <div class="strategy"><span class="ic">${st.icon}</span>${st.label}</div>
+      <div class="offer-amt">${fmt(st.offer)}</div>
+      <div class="offer-amt-lbl">Buyer / Exit Offer</div>
+      <div class="profit-lbl">Your Profit Potential</div>
+      <div class="profit-amt">${fmt(st.profit)}</div>
+    </div>`;
+  }).join('');
+
+  return `
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Four Exit Strategies, Side by Side</div>
+    <div class="offer-grid">${cards}</div>
+    <div class="note">Contract price used for profit math: <b>${fmt(calc.contractPrice)}</b>. Change it in Calculator Settings.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Wholesale — Detail</div>
+    <div class="grid grid-2">
+      <div><div class="kv-row"><span class="k">Market Value</span><span class="v">${fmt(calc.wholesale.marketValue)}</span></div>
+      <div class="kv-row"><span class="k">Wholesale Fee</span><span class="v">${fmt(calc.wholesale.wholesaleFee$)}</span></div>
+      <div class="kv-row"><span class="k">Buyer Equity</span><span class="v">${fmt(calc.wholesale.buyerEquity$)}</span></div>
+      <div class="kv-row"><span class="k">Closing Costs</span><span class="v">${fmt(calc.wholesale.closingCosts$)}</span></div></div>
+      <div><div class="kv-row"><span class="k">Holding Costs</span><span class="v">${fmt(calc.wholesale.holdingCosts$)}</span></div>
+      <div class="kv-row"><span class="k">Marketing Costs</span><span class="v">${fmt(calc.wholesale.marketingCosts$)}</span></div>
+      <div class="kv-row"><span class="k"><b>Maximum Allowable Offer</b></span><span class="v"><b>${fmt(calc.wholesale.MAO)}</b></span></div>
+      <div class="kv-row"><span class="k"><b>Suggested Offer</b></span><span class="v"><b>${fmt(calc.wholesale.suggestedOffer)}</b></span></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Builder — Detail</div>
+    <div class="grid grid-2">
+      <div><div class="kv-row"><span class="k">Builder Value</span><span class="v">${fmt(calc.builder.builderValue)}</span></div>
+      <div class="kv-row"><span class="k">Highest Builder Offer</span><span class="v">${fmt(calc.builder.highestBuilderOffer)}</span></div></div>
+      <div><div class="kv-row"><span class="k">Est. Builder Profit</span><span class="v">${fmt(calc.builder.builderProfitTheirs)}</span></div>
+      <div class="kv-row"><span class="k">Builder ROI</span><span class="v">${pct(calc.builder.builderROI*100)}</span></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Developer — Detail</div>
+    <div class="grid grid-2">
+      <div><div class="kv-row"><span class="k">Potential Lots</span><span class="v">${calc.developer.potentialLots}</span></div>
+      <div class="kv-row"><span class="k">Price / Lot</span><span class="v">${fmt(calc.developer.pricePerLot)}</span></div>
+      <div class="kv-row"><span class="k">Development Value</span><span class="v">${fmt(calc.developer.grossDevValue)}</span></div></div>
+      <div><div class="kv-row"><span class="k">Development Costs</span><span class="v">${fmt(calc.developer.devCosts$)}</span></div>
+      <div class="kv-row"><span class="k"><b>Highest Developer Offer</b></span><span class="v"><b>${fmt(calc.developer.highestDeveloperOffer)}</b></span></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Novation — Detail</div>
+    <div class="grid grid-2">
+      <div><div class="kv-row"><span class="k">Retail Value</span><span class="v">${fmt(calc.novation.retailValue)}</span></div>
+      <div class="kv-row"><span class="k">Commission</span><span class="v">${fmt(calc.novation.commission$)}</span></div>
+      <div class="kv-row"><span class="k">Closing Costs</span><span class="v">${fmt(calc.novation.novClosing$)}</span></div></div>
+      <div><div class="kv-row"><span class="k">Seller Net</span><span class="v">${fmt(calc.novation.sellerNet)}</span></div>
+      <div class="kv-row"><span class="k"><b>Your Fee</b></span><span class="v"><b>${fmt(calc.novation.yourFee)}</b></span></div>
+      <div class="kv-row"><span class="k">Projected Profit</span><span class="v">${fmt(calc.novation.projectedProfit)}</span></div></div>
+    </div>
+  </div>`;
+}
+
+/* ---------- 6. GRADE ---------- */
+function panelGrade(calc){
+  const gradeText = calc.grade==='Aplus' ? 'A+' : calc.grade;
+  return `
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Deal Grade</div>
+    <div class="grade-hero">
+      <div class="grade-badge grade-${calc.grade}">${gradeText}</div>
+      <div class="grade-copy">
+        <div class="title">${calc.gradeLabel}</div>
+        <div class="desc">${calc.gradeDesc}</div>
+      </div>
+    </div>
+    <div class="grid grid-3" style="margin-top:20px;">
+      <div class="stat"><div class="lbl">Best Strategy</div><div class="val">${calc.bestStrategy.label}</div></div>
+      <div class="stat"><div class="lbl">Profit Margin (of MV)</div><div class="val emerald">${pct(calc.marginPct)}</div></div>
+      <div class="stat"><div class="lbl">Overall Risk Score</div><div class="val">${Math.round(calc.overallRisk)}/100</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Grading Scale</div>
+    <div class="kv-row"><span class="k">🟢 A+ — Institutional Buy</span><span class="v">≥ 25% margin</span></div>
+    <div class="kv-row"><span class="k">🟢 A — Excellent</span><span class="v">≥ 18% margin</span></div>
+    <div class="kv-row"><span class="k">🟡 B — Strong Buy</span><span class="v">≥ 12% margin</span></div>
+    <div class="kv-row"><span class="k">🟠 C — Thin Deal</span><span class="v">≥ 6% margin</span></div>
+    <div class="kv-row"><span class="k">🔴 F — Pass</span><span class="v">&lt; 6% margin</span></div>
+    <div class="note">Grades are automatically downgraded one tier if the overall risk score is 65 or higher.</div>
+  </div>`;
+}
+
+/* ---------- 7. DUE DILIGENCE ---------- */
+function panelDD(calc){
+  const items = Object.keys(state.dd);
+  const rows = items.map(k=>{
+    const v = state.dd[k];
+    return `<div class="dd-item">
+      <div class="name">${k}</div>
+      <div class="flag-group">
+        <button class="flag-btn green ${v==='green'?'on':''}" onclick="setDD('${k}','green')" title="Clear"></button>
+        <button class="flag-btn amber ${v==='amber'?'on':''}" onclick="setDD('${k}','amber')" title="Caution"></button>
+        <button class="flag-btn red ${v==='red'?'on':''}" onclick="setDD('${k}','red')" title="Issue"></button>
+      </div>
+    </div>`;
+  }).join('');
+  return `
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Due Diligence Checklist</div>
+    ${rows}
+    <div class="note">Green = clear. Amber = needs review. Red = confirmed issue. These flags feed directly into the Environmental, Flood, and Title/Access risk categories on the next step.</div>
+  </div>`;
+}
+function setDD(key,val){ state.dd[key]=val; renderAll(); }
+
+/* ---------- 8. RISK ---------- */
+function panelRisk(calc){
+  const slider = (key,label) => `<div class="slider-row">
+    <div class="top"><span>${label}</span><span class="mono">${state.risk[key]}/100</span></div>
+    <input type="range" min="0" max="100" data-risk="${key}" value="${state.risk[key]}">
+  </div>`;
+  const riskColor = calc.overallRisk>=65?'var(--red)':calc.overallRisk>=40?'var(--amber)':'var(--emerald)';
+  return `
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Overall Risk</div>
+    <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+      <div class="risk-gauge-num" style="color:${riskColor}">${Math.round(calc.overallRisk)}</div>
+      <div style="color:var(--text-muted); font-size:13px; max-width:420px;">
+        0 = minimal risk, 100 = maximum risk. Combines your manual sliders below with automatic scoring from the Due Diligence checklist.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Manual Risk Factors</div>
+    ${slider('market','Market Risk')}
+    ${slider('builder','Builder / Buyer Demand Risk')}
+    ${slider('liquidity','Liquidity Risk')}
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Auto-Scored From Due Diligence</div>
+    <div class="grid grid-4">
+      <div class="stat"><div class="lbl">Environmental Risk</div><div class="val">${Math.round(calc.envRisk)}</div></div>
+      <div class="stat"><div class="lbl">Flood Risk</div><div class="val">${Math.round(calc.floodRisk)}</div></div>
+      <div class="stat"><div class="lbl">Title Risk</div><div class="val">${Math.round(calc.titleRisk)}</div></div>
+      <div class="stat"><div class="lbl">Access Risk</div><div class="val">${Math.round(calc.accessRisk)}</div></div>
+    </div>
+  </div>`;
+}
+
+/* ---------- 9. OFFER STRATEGY ---------- */
+function panelOffer(calc){
+  const o = calc.offerStrategy;
+  return `
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Offer Ladder</div>
+    <div class="grid grid-4">
+      <div class="stat"><div class="lbl">Initial Offer</div><div class="val">${fmt(o.initial)}</div></div>
+      <div class="stat"><div class="lbl">Counter Offer</div><div class="val">${fmt(o.counter)}</div></div>
+      <div class="stat"><div class="lbl">Maximum Offer</div><div class="val emerald">${fmt(o.max)}</div></div>
+      <div class="stat"><div class="lbl">Walk-Away Price</div><div class="val" style="color:var(--red)">${fmt(o.walkAway)}</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>Negotiation Tips</div>
+    <ul class="tips-list">
+      <li>Anchor low with the Initial Offer and let the seller counter — never open at your Maximum Offer.</li>
+      <li>Lead with certainty of close (cash, fast timeline, as-is) rather than price alone — land sellers often value speed and simplicity.</li>
+      <li>Reference the comps directly. Sellers respond better to "here's what similar lots sold for" than a flat "no."</li>
+      <li>If the seller won't move off asking, ask what's driving that number — back taxes, an estate deadline, or a prior offer can reveal real flexibility.</li>
+      <li>Hold your Walk-Away Price firm. A deal above it stops being a wholesale deal and starts eating your fee.</li>
+    </ul>
+  </div>`;
+}
+
+/* ---------- 10. SUMMARY ---------- */
+function panelSummary(calc){
+  const p = state.property;
+  const recColor = calc.recommendation==='BUY' ? 'var(--emerald-dark)' : 'var(--red)';
+  const text =
+`PROPERTY SUMMARY
+${p.address || '(address not entered)'}${p.county? ', '+p.county+' County':''}${p.state? ', '+p.state:''}
+Lot size: ${fmt1(calc.lotAcres)} acres  •  Zoning: ${p.zoning||'—'}  •  Asking price: ${p.askingPrice?fmt(num(p.askingPrice)):'—'}
+
+COMPARABLE SALES SUMMARY
+${state.comps.filter(c=>c.included).length} comparable sale(s) used, weighted average of ${fmt(calc.avgPPA)}/acre.
+
+MARKET VALUE
+Low ${fmt(calc.lowMV)}  •  Likely ${fmt(calc.likelyMV)}  •  High ${fmt(calc.highMV)}  •  Confidence ${Math.round(calc.confidence)}%
+
+WHOLESALE ANALYSIS
+Maximum Allowable Offer: ${fmt(calc.wholesale.MAO)}
+Suggested Offer: ${fmt(calc.wholesale.suggestedOffer)}
+Projected Assignment Fee: ${fmt(calc.wholesale.assignmentFee)}
+
+BUILDER ANALYSIS
+Highest Builder Offer: ${fmt(calc.builder.highestBuilderOffer)}  (your profit if sold to builder: ${fmt(calc.builder.ourProfit)})
+
+DEVELOPER ANALYSIS
+${calc.developer.potentialLots} potential lots at ${fmt(calc.developer.pricePerLot)}/lot — Highest Developer Offer: ${fmt(calc.developer.highestDeveloperOffer)} (your profit: ${fmt(calc.developer.ourProfit)})
+
+NOVATION ANALYSIS
+Your Fee: ${fmt(calc.novation.yourFee)}  •  Projected Profit: ${fmt(calc.novation.projectedProfit)}
+
+SUGGESTED CASH OFFER
+${fmt(calc.wholesale.suggestedOffer)}  (Maximum Offer: ${fmt(calc.wholesale.MAO)})
+
+RISK ANALYSIS
+Overall Risk Score: ${Math.round(calc.overallRisk)}/100
+
+DEAL GRADE: ${calc.grade==='Aplus'?'A+':calc.grade} — ${calc.gradeLabel}
+Best exit strategy: ${calc.bestStrategy.label} (${fmt(calc.bestStrategy.profit)} profit potential)
+
+RECOMMENDATION: ${calc.recommendation}
+Confidence Score: ${Math.round(calc.confidence)}%`;
+
+  return `
+  <div class="card">
+    <div class="card-title"><span class="dot"></span>AI-Generated Deal Report</div>
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+      <div style="font-family:'Space Grotesk'; font-weight:700; font-size:26px; color:${recColor};">${calc.recommendation}</div>
+      <div style="color:var(--text-muted); font-size:13px;">at ${fmt(calc.contractPrice)} contract price, grade ${calc.grade==='Aplus'?'A+':calc.grade}</div>
+    </div>
+    <div class="summary-box" id="summaryText">${text}</div>
+    <div style="margin-top:14px;" class="no-print"><button class="btn btn-emerald btn-sm" onclick="copySummary()">📋 Copy Report</button></div>
+  </div>`;
+}
+function copySummary(){
+  const t = document.getElementById('summaryText').innerText;
+  navigator.clipboard.writeText(t).then(()=>alert('Report copied to clipboard.'));
+}
+
+/* =========================================================================
+   BINDING
+========================================================================= */
+function attachHandlers(){
+  document.querySelectorAll('[data-bind]').forEach(el=>{
+    const evt = (el.type==='checkbox') ? 'change' : 'input';
+    el.addEventListener(evt, e=>{
+      const path = el.getAttribute('data-bind').split('.');
+      let target = state;
+      for(let i=0;i<path.length-1;i++) target = target[path[i]];
+      const key = path[path.length-1];
+      target[key] = el.type==='checkbox' ? el.checked : el.value;
+      // live recompute without full re-render for text inputs to preserve focus, except structural fields
+      softRecalc();
+    });
+  });
+  document.querySelectorAll('[data-comp]').forEach(el=>{
+    const evt = (el.type==='checkbox') ? 'change' : 'input';
+    el.addEventListener(evt, e=>{
+      const [idx,key] = el.getAttribute('data-comp').split('.');
+      state.comps[idx][key] = el.type==='checkbox' ? el.checked : el.value;
+      softRecalc();
+    });
+  });
+  document.querySelectorAll('[data-risk]').forEach(el=>{
+    el.addEventListener('input', e=>{
+      state.risk[el.getAttribute('data-risk')] = el.value;
+      renderAll();
+    });
+  });
+}
+
+// Recompute derived numbers + refresh only the mini grade / topbar without losing input focus for simple fields.
+// For simplicity and reliability we do a full re-render, but restore focus afterward.
+function softRecalc(){
+  const active = document.activeElement;
+  const tag = active ? active.tagName : null;
+  const bindPath = active ? (active.getAttribute('data-bind') || active.getAttribute('data-comp')) : null;
+  const selStart = active && active.setSelectionRange ? active.selectionStart : null;
+  renderAll();
+  if(bindPath){
+    const sel = active.getAttribute('data-bind') ? `[data-bind="${bindPath}"]` : `[data-comp="${bindPath}"]`;
+    const el = document.querySelector(sel);
+    if(el){
+      el.focus();
+      if(selStart!==null && el.setSelectionRange){ try{ el.setSelectionRange(selStart, selStart); }catch(e){} }
+    }
+  }
+}
+
+/* =========================================================================
+   INIT
+========================================================================= */
+renderAll();
+</script>
+</body>
+</html>
